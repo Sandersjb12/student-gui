@@ -1,9 +1,10 @@
 //Jeremy Sanders
 //Insy 4305-001
 
+import java.io.*;
 import java.util.*;
 
-public class Customer implements Invoice
+public class Customer implements Invoice, Serializable
 {
 	private String name;
 	private Address address;

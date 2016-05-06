@@ -48,6 +48,16 @@ public class CourseGUI extends JFrame
     private Customer tempCustomer;
     private int customerIndex;
 
+    private JMenuBar bar;
+    private JMenu addMenu;
+    private JMenuItem addCustomer;
+    private JMenuItem addCourse;
+    private JMenu invoiceMenu;
+    private JMenuItem generateInvoice;
+    private JMenu exitMenu;
+    private JMenuItem writeFiles;
+    private JMenuItem exitProgram;
+
     public CourseGUI()
     {
         super("Course GUI");
@@ -67,12 +77,12 @@ public class CourseGUI extends JFrame
         submitLabel=new JLabel("Click Submit When Done");
         finishLabel=new JLabel("Click When Finished");
 
-        nameField=new JTextField();
-        streetField=new JTextField();
-        cityField=new JTextField();
-        stateField=new JTextField();
-        zipField=new JTextField();
-        accountNumberField=new JTextField();
+        streetField=new JTextField(20);
+        cityField=new JTextField(20);
+        stateField=new JTextField(20);
+        zipField=new JTextField(5);
+        nameField=new JTextField(20);
+        accountNumberField=new JTextField(20);
 
         customerTypePanel=new JPanel();
         customerTypeGroup=new ButtonGroup();
@@ -103,13 +113,193 @@ public class CourseGUI extends JFrame
         submitButton=new JButton("Submit");
         finishButton=new JButton("Finish");
 
+        bar=new JMenuBar();
+        addMenu=new JMenu("Add");
+        addCustomer=new JMenuItem("Add Customer");
+        addCourse=new JMenuItem("Add Course");
+        invoiceMenu=new JMenu("Invoice");
+        generateInvoice=new JMenuItem("Generate Invoice");
+        exitMenu=new JMenu("Exit");
+        writeFiles=new JMenuItem("Write Files");
+        exitProgram=new JMenuItem("Exit");
+
+        addMenu.add(addCustomer);
+        addMenu.add(addCourse);
+        invoiceMenu.add(generateInvoice);
+        exitMenu.add(writeFiles);
+        exitMenu.add(exitProgram);
+
+        bar.add(addMenu);
+        bar.add(invoiceMenu);
+        bar.add(exitMenu);
+
+        setJMenuBar(bar);
+
+        addCustomer.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent ae)
+            {
+                if(checkInput(false))
+                {
+                    try
+                    {
+                        if (addCustomer(nameField.getText(), new Address(streetField.getText(), cityField.getText(), stateField.getText(), Integer.parseInt(zipField.getText())), Integer.parseInt(accountNumberField.getText())))
+                            throw new CustomerAlreadyExistsException(new Customer(nameField.getText(), new Address(streetField.getText(), cityField.getText(), stateField.getText(), Integer.parseInt(zipField.getText())), Integer.parseInt(accountNumberField.getText())));
+                    }
+                    catch (CustomerAlreadyExistsException caee)
+                    {
+                        JOptionPane.showMessageDialog(null, "Customer already exists.");
+                    }
+
+                    clearFields();
+
+                }
+            }
+        });
+
+        addCourse.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent ae)
+            {
+                boolean found=false;
+
+                if(checkInput(true))
+                {
+                    for (Customer c : customerList)
+                    {
+                        if (c.getAccountNumber() == Integer.parseInt(accountNumberField.getText()))
+                        {
+                            customerIndex = customerList.indexOf(c);
+                            addCourse(c.getName(), courseList.get(courseBox.getSelectedIndex()));
+                            found = true;
+                        }
+                    }
+
+                    try
+                    {
+                        if (!found)
+                            throw new CustomerNotEnrolledException(new Customer(nameField.getText(), new Address(streetField.getText(), cityField.getText(), stateField.getText(), Integer.parseInt(zipField.getText())), Integer.parseInt(accountNumberField.getText())));
+                    }
+                    catch (CustomerNotEnrolledException cnee)
+                    {
+                        JOptionPane.showMessageDialog(null, "Customer has not been enrolled.");
+                    }
+
+                    clearFields();
+                }
+            }
+        });
+
+        generateInvoice.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent ae)
+            {
+                String invoices="";
+
+                for(Customer c:customerList)
+                    invoices+=c.createInvoice();
+
+                JOptionPane.showMessageDialog(null,invoices);
+            }
+        });
+
+        writeFiles.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent ae)
+            {
+                ObjectOutputStream customerOutput;
+                ObjectOutputStream courseOutput;
+
+                try
+                {
+                    customerOutput = new ObjectOutputStream(new FileOutputStream("customers.ser"));
+                    courseOutput = new ObjectOutputStream(new FileOutputStream("courses.ser"));
+
+                    for (Customer c : customerList)
+                        customerOutput.writeObject(c);
+
+                    for (Course c : courseList)
+                        courseOutput.writeObject(c);
+                }
+                catch(IOException ioe)
+                {
+                    ioe.printStackTrace();
+                }
+            }
+        });
+
+        exitProgram.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent ae)
+            {
+                ObjectInputStream customerInput;
+                ObjectInputStream courseInput;
+
+                Customer cu;
+                Course co;
+
+                try
+                {
+                    customerInput=new ObjectInputStream(new FileInputStream("customers.ser"));
+
+                    while(true)
+                    {
+                        cu=(Customer)customerInput.readObject();
+
+                        System.out.println(cu.toString());
+                    }
+                }
+                catch(EOFException eofe)
+                {
+
+                }
+                catch(ClassNotFoundException cnfe)
+                {
+                    System.out.println("Class doesn't exist");
+                }
+                catch(IOException ioe)
+                {
+                    ioe.printStackTrace();
+                }
+
+                try
+                {
+                    courseInput=new ObjectInputStream(new FileInputStream("courses.ser"));
+
+                    while(true)
+                    {
+                        co=(Course)courseInput.readObject();
+
+                        System.out.println(co.toString());
+                    }
+                }
+                catch(EOFException eofe)
+                {
+
+                }
+                catch(ClassNotFoundException cnfe)
+                {
+                    System.out.println("Class doesn't exist");
+                }
+                catch(IOException ioe)
+                {
+                    ioe.printStackTrace();
+                }
+
+                System.exit(0);
+            }
+        });
+
         submitButton.addActionListener(new ActionListener()
         {
             public void actionPerformed(ActionEvent ae)
             {
-                addCustomer(nameField.getText(),new Address(streetField.getText(),cityField.getText(),stateField.getText(),Integer.parseInt(zipField.getText())),Integer.parseInt(accountNumberField.getText()));
-                addCourse(nameField.getText(),courseList.get(courseBox.getSelectedIndex()));
-                clearFields();
+                if(checkInput(true))
+                {
+                    addCustomer(nameField.getText(), new Address(streetField.getText(), cityField.getText(), stateField.getText(), Integer.parseInt(zipField.getText())), Integer.parseInt(accountNumberField.getText()));
+                    addCourse(nameField.getText(), courseList.get(courseBox.getSelectedIndex()));
+                    clearFields();
+                }
             }
         }
         );
@@ -164,6 +354,8 @@ public class CourseGUI extends JFrame
         String line;
         String values[];
         boolean repeated;
+
+        tempCourseList.add(new Course());
 
         try
         {
@@ -246,7 +438,7 @@ public class CourseGUI extends JFrame
         return false;
     }
 
-    public void addCustomer(String name, Address a, int accountNumber)
+    public boolean addCustomer(String name, Address a, int accountNumber)
     {
         tempCustomer=new Customer(name,a,accountNumber);
 
@@ -272,6 +464,8 @@ public class CourseGUI extends JFrame
             customerIndex=customerList.size();
             customerList.add(tempCustomer);
         }
+
+        return exists;
     }
 
 
@@ -292,5 +486,88 @@ public class CourseGUI extends JFrame
         customerTypeGroup.clearSelection();
         courseBox.setSelectedIndex(0);
         nameField.requestFocus();
+    }
+
+    public boolean checkInput(boolean checkCourse)
+    {
+        if(nameField.getText().isEmpty())
+        {
+            JOptionPane.showMessageDialog(null,"Enter a name");
+            nameField.requestFocus();
+            return false;
+        }
+
+        else if(streetField.getText().isEmpty())
+        {
+            JOptionPane.showMessageDialog(null, "Enter a street address");
+            streetField.requestFocus();
+            return false;
+        }
+
+        else if(cityField.getText().isEmpty())
+        {
+            JOptionPane.showMessageDialog(null, "Enter a city");
+            cityField.requestFocus();
+            return false;
+        }
+
+        else if(stateField.getText().isEmpty())
+        {
+            JOptionPane.showMessageDialog(null, "Enter a state");
+            stateField.requestFocus();
+            return false;
+        }
+
+        else if(zipField.getText().isEmpty())
+        {
+            JOptionPane.showMessageDialog(null, "Enter a zip code");
+            zipField.requestFocus();
+            return false;
+        }
+
+        else if(accountNumberField.getText().isEmpty())
+        {
+            JOptionPane.showMessageDialog(null, "Enter an account number");
+            accountNumberField.requestFocus();
+            return false;
+        }
+
+        else if(!studentButton.isSelected() && !facultyButton.isSelected() && !governmentButton.isSelected())
+        {
+            JOptionPane.showMessageDialog(null,"Select a customer type");
+            return false;
+        }
+
+        else if(courseBox.getSelectedIndex()==0 && checkCourse)
+        {
+            JOptionPane.showMessageDialog(null,"Select a course");
+            return false;
+        }
+
+        try
+        {
+            Integer.parseInt(zipField.getText());
+        }
+        catch(NumberFormatException nfe)
+        {
+            JOptionPane.showMessageDialog(null,"Enter an integer in the Zip field");
+            zipField.setText("");
+            zipField.requestFocus();
+            return false;
+        }
+
+        try
+        {
+            Integer.parseInt(accountNumberField.getText());
+        }
+        catch(NumberFormatException nfe)
+        {
+            JOptionPane.showMessageDialog(null,"Enter an integer in the Account Number field");
+            accountNumberField.setText("");
+            accountNumberField.requestFocus();
+            return false;
+        }
+
+        return true;
     }
 }

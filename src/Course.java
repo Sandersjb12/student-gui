@@ -1,9 +1,10 @@
 //Jeremy Sanders
 //Insy 4305-001
 
+import java.io.*;
 import java.util.*;
 
-public class Course
+public class Course implements Serializable
 {
 	private String title;
 	private String instructor;
@@ -15,7 +16,7 @@ public class Course
 
 	public Course()
 	{
-		this("None","None",-1,new Date(),new Date());
+		this("Select a Course","None",-1,new Date(),new Date());
 	}
 
 	public Course(String title, String instructor, double price, Date startDate, Date endDate)

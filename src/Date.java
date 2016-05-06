@@ -1,7 +1,9 @@
 //Jeremy Sanders
 //Insy 4305-001
 
-public class Date
+import java.io.*;
+
+public class Date implements Serializable
 {
 	private int month;
 	private int day;

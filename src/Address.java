@@ -1,7 +1,9 @@
 //Jeremy Sanders
 //Insy 4305-001
 
-public class Address
+import java.io.*;
+
+public class Address implements Serializable
 {
 	private String street;
 	private String city;

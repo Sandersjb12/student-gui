@@ -1,7 +1,9 @@
 //Jeremy Sanders
 //Insy 4305-001
 
-public class Time
+import java.io.*;
+
+public class Time implements Serializable
 {
 	private int hours;
 	private int minutes;
